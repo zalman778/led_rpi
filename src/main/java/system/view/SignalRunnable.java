@@ -15,4 +15,8 @@ public interface SignalRunnable extends Runnable {
     public void init();
 
     public void setLedStrip(LedStrip ledStrip);
+
+    public void stop();
+
+    public void sendSignal();
 }

@@ -2,6 +2,7 @@ package system;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.web.support.SpringBootServletInitializer;
@@ -31,23 +32,24 @@ public class Application extends SpringBootServletInitializer implements Servlet
     final static Logger logger = Logger.getLogger(Application.class);
 
     public static void main(String[] args) throws LineUnavailableException {
-
         ApplicationContext ctx = SpringApplication.run(Application.class, args);
-
-        System.out.println("Let's inspect the beans provided by Spring Boot:");
-
-        String[] beanNames = ctx.getBeanDefinitionNames();
-        Arrays.sort(beanNames);
-        for (String beanName : beanNames) {
-            System.out.println(beanName);
-        }
     }
+
+    @Autowired
+    private ApplicationContext context;
 
     @Autowired
     LedStrip ledStrip;
 
+    @Autowired
+    SignalRunnable signalRunnable;
+
+    @Autowired
+    SoundRunnable soundRunnable;
+
+
     @Bean
-    @Scope("singleton")
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public LedStrip ledStrip() {
         LedStrip ledStripNew = new LedStrip();
         ledStripNew.init();
@@ -55,44 +57,34 @@ public class Application extends SpringBootServletInitializer implements Servlet
     }
 
     @Bean
-    @Scope("singleton")
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public SoundListenner soundListenner() {
         SoundListenner soundListenner = new SoundListenner();
         soundListenner.setLedStrip(ledStrip);
         soundListenner.init();
-        Thread tSound = new Thread(soundListenner);
-        tSound.start();
         return soundListenner;
     }
 
 
     @Bean
-    @Scope("singleton")
-    public SignalSender signalSender() {
-        SignalSender signalSender = new SignalSender(ledStrip);
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public SignalRunnable signalSender() {
+        SignalRunnable signalSender = new SignalSender(ledStrip);
         signalSender.init();
-        Thread tSignal = new Thread(signalSender);
-        tSignal.start();
         return signalSender;
     }
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
-        ApplicationContext ac = new AnnotationConfigApplicationContext(Application.class);
-        sce.getServletContext().setAttribute("applicationContext", ac);
-        ServletContext sc = sce.getServletContext();
-        logger.info("app started:");
-        Config.readAll(ac);
-
-
-
-
-
+        Config.readAll(context);
     }
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
+        signalRunnable.stop();
+        soundRunnable.stop();
     }
+
 
 
 }

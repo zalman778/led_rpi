@@ -1,5 +1,6 @@
 package system.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 
@@ -15,11 +16,10 @@ import java.util.Properties;
  */
 public class Config {
 
-
-    public static Integer INT_CNT = 50;
+    public static Integer INT_CNT = 20;
     public static Integer LED_CNT = 780;
     public static Integer MAX_HZ = 25000;
-    public static Integer MAX_HZ_LIMIT = 10000;
+    public static Integer MAX_HZ_LIMIT = 15000;
     public static Float MIN_SOUAND_AMPL_FILTER_PRC = 3.2f;
     public static Float LOW_HZ_MLT = 1.00f;
     public static Float LOW_HZ_MLT_HIGH_BOUND = 1500f;
@@ -35,20 +35,15 @@ public class Config {
     public static Integer ASYM_MODE = 1;
     public static String SEND = "1";
 
-    public static double[] maxAmplArrAllTime = new double[INT_CNT - 1];
+
+
+    public static double[] maxAmplArrAllTime = new double[INT_CNT];
     //список последних аплитуд, для поиск затишья
     public static LinkedList<Double> lastXAmplList = new LinkedList<>();
 
     public static synchronized LinkedList<Double> getLastXAmplList(){
         return lastXAmplList;
     }
-
-//    public synchronized static double getLastAmplList(int i) {
-//        return lastXAmplList.get(i);
-//    }
-//    public synchronized static void setLastAmplList(int i, double val) {
-//        lastXAmplList.set(i, val);
-//    }
     public static Integer currAmplListSize = 0;
     public static Double currentMaxAmplVal = -Double.MIN_VALUE; //текущее значение макс громкости, для подсчета процена (выше)
 
@@ -58,7 +53,9 @@ public class Config {
 
     public static void reset() {
         currentMaxAmplVal = 0d;
-        Arrays.fill(maxAmplArrAllTime, 0);
+        maxAmplArrAllTime = new double[INT_CNT];
+        lastXAmplList = new LinkedList<>();
+        currentMaxAmplVal = -Double.MIN_VALUE;
     }
 
 

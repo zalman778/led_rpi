@@ -13,6 +13,7 @@ import system.model.LedStrip;
 
 import javax.sound.sampled.*;
 import java.awt.*;
+import java.io.IOException;
 import java.util.Arrays;
 
 
@@ -30,6 +31,13 @@ public class Scanner {
     private AudioProcessor audioProcessor;
     private LedStrip ledStrip;
 
+    private AudioFormat format;
+    private TargetDataLine line;
+    private AudioInputStream stream;
+    private TarsosDSPAudioInputStream audioStream;
+
+
+
 
 
 
@@ -46,30 +54,51 @@ public class Scanner {
         audioDispatcher.run();
     }
 
+    private void clear() {
+        //cleaning previous
+        try {
 
+            if (audioDispatcher != null) {
+                audioDispatcher.stop();
+                audioDispatcher = null;
+            }
+
+            if (audioStream != null) {
+                audioStream.close();
+            }
+
+            if (stream != null) {
+                stream.close();
+            }
+
+            if (line != null) {
+                line.close();
+            }
+
+            if (format != null) {
+                format = null;
+            }
+
+            System.gc();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public void initialize()  {
 
-        //audioDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate, 4096, 0);
-
-        //creating from default microphone:
-        int audioBufferSize = 4096;
+        clear();
 
         try {
 
-
-            AudioFormat format = new AudioFormat(48000, 16, 1, true, true);
-//        System.out.println("got  format:");
-//        System.out.println(format.toString());
-            TargetDataLine line = AudioSystem.getTargetDataLine(format);
-//        System.out.println("got line:");
-//        System.out.println(line.getLineInfo().toString());
-
-            line.open(format, audioBufferSize);
+            format = new AudioFormat(sampleRate, 16, 1, true, true);
+            line = AudioSystem.getTargetDataLine(format);
+            line.open(format, bufferSize);
             line.start();
-            AudioInputStream stream = new AudioInputStream(line);
-            TarsosDSPAudioInputStream audioStream = new JVMAudioInputStream(stream);
-            audioDispatcher = new AudioDispatcher(audioStream, audioBufferSize, 0);
+
+            stream = new AudioInputStream(line);
+            audioStream = new JVMAudioInputStream(stream);
+            audioDispatcher = new AudioDispatcher(audioStream, bufferSize, 0);
 
             audioProcessor = new AudioProcessor() {
 
@@ -226,7 +255,7 @@ public class Scanner {
                         }
 
                         for (int j = i * ledIntDelta; j < (i + 1) * ledIntDelta; j++) {
-                            ledStrip.set(j, new Led(red, green, blue, 0.61f));
+                            ledStrip.set(j, new Led(red, green, blue, Config.LED_BRIGHT));
                         }
 
 

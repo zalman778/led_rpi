@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import system.config.Config;
 import system.model.Led;
 import system.model.LedStrip;
-import system.view.SignalSender;
+import system.view.SignalRunnable;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -26,7 +26,10 @@ public class LedController {
     LedStrip ledStrip;
 
     @Autowired
-    SignalSender signalSender;
+    SignalRunnable signalSender;
+
+    @Autowired
+    SoundRunnable soundListenner;
 
     @GetMapping("/set_blue")
     @ResponseBody
@@ -66,15 +69,10 @@ public class LedController {
         } catch (Exception e) {
             return "param should be 0-360: "+e.getLocalizedMessage();
         }
+        soundListenner.init();
         return "OK";
     }
 
-
-    @GetMapping("/info")
-    @ResponseBody
-    public String hello() {
-        return String.valueOf(Config.MIN_HSB_VAL)+" -> "+String.valueOf(Config.MAX_HSB_VAL);
-    }
 
     @GetMapping("/reset")
     @ResponseBody
@@ -93,15 +91,21 @@ public class LedController {
                 case "class java.lang.Float":
                     Float value = Float.parseFloat(paramValue);
                     field.set(null, value);
-                    return "OK";
+                    break;
                 case "class java.lang.Integer":
                     Integer intVal = Integer.parseInt(paramValue);
                     field.set(null, intVal);
-                    return "OK";
+                    break;
                 case "class java.lang.String":
                     field.set(null, paramValue);
-                    return "OK";
+                    break;
             }
+            soundListenner.stop();
+            signalSender.stop();
+            Config.reset();
+            soundListenner.init();
+            signalSender.init();
+
         } catch (NoSuchFieldException e) {
             return "Field not found";
         } catch (IllegalAccessException e) {
@@ -110,7 +114,7 @@ public class LedController {
         return "OK";
     }
 
-    @GetMapping("/info_full")
+    @GetMapping("/info")
     @ResponseBody
     public String full_info() {
         StringBuilder sb = new StringBuilder();
@@ -126,4 +130,13 @@ public class LedController {
         }
         return sb.toString();
     }
+
+    @GetMapping("/stop")
+    @ResponseBody
+    public String stopAll() {
+        signalSender.stop();
+        soundListenner.stop();
+        return "OK";
+    }
+
 }

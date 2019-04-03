@@ -9,4 +9,7 @@ public interface SoundRunnable extends Runnable  {
     public void init();
 
     public void setLedStrip(LedStrip ledStrip);
+
+    public void stop();
+
 }

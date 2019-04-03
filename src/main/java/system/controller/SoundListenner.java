@@ -11,6 +11,7 @@ public class SoundListenner implements SoundRunnable {
 
     private LedStrip ledStrip;
     private Scanner scanner;
+    private Thread currentThread;
 
     @Override
     public void init() {
@@ -19,11 +20,25 @@ public class SoundListenner implements SoundRunnable {
         scanner.setLedStrip(ledStrip);
         scanner.initialize();
 
+        currentThread = new Thread(this);
+        currentThread.start();
+
     }
 
     @Override
     public void setLedStrip(LedStrip ledStrip) {
         this.ledStrip = ledStrip;
+    }
+
+    @Override
+    public void stop() {
+        //currentThread.interrupt();
+        currentThread.stop();
+        currentThread.destroy();
+        currentThread = null;
+
+        scanner = null;
+        System.gc();
     }
 
     @Override
