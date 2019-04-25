@@ -4,7 +4,6 @@ package system.view;
 import com.github.mbelling.ws281x.LedStripType;
 import com.github.mbelling.ws281x.Ws281xLedStrip;
 import system.config.Config;
-import system.config.Fader;
 import system.model.LedStrip;
 
 import java.io.BufferedReader;
@@ -31,8 +30,6 @@ public class SignalSender implements SignalRunnable{
         this.ledStrip = ledStrip;
 
     }
-
-
 
     @Override
     public void run() {

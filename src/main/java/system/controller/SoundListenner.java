@@ -1,5 +1,6 @@
 package system.controller;
 
+import system.effects.EffectsHandler;
 import system.model.LedStrip;
 
 import javax.sound.sampled.LineUnavailableException;
@@ -12,6 +13,7 @@ public class SoundListenner implements SoundRunnable {
     private LedStrip ledStrip;
     private Scanner scanner;
     private Thread currentThread;
+    private EffectsHandler effectsHandler;
 
     @Override
     public void init() {
@@ -28,6 +30,11 @@ public class SoundListenner implements SoundRunnable {
     @Override
     public void setLedStrip(LedStrip ledStrip) {
         this.ledStrip = ledStrip;
+    }
+
+    @Override
+    public void setEffectsHandler(EffectsHandler effectsHandler) {
+        this.effectsHandler = effectsHandler;
     }
 
     @Override

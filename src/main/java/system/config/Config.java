@@ -1,39 +1,43 @@
 package system.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 
 import java.io.*;
-import java.net.Inet4Address;
-import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Properties;
 
 /**
- * Created by sanek on 05.02.2018.
+ * Основной конфигурацинный класс.
  */
 public class Config {
 
-    public static Integer INT_CNT = 20;
+    public static Integer INT_CNT = 60;
     public static Integer LED_CNT = 780;
-    public static Integer MAX_HZ = 25000;
-    public static Integer MAX_HZ_LIMIT = 15000;
-    public static Float MIN_SOUAND_AMPL_FILTER_PRC = 3.2f;
-    public static Float LOW_HZ_MLT = 1.00f;
-    public static Float LOW_HZ_MLT_HIGH_BOUND = 1500f;
-    public static Float MID_HZ_MLT = 1.0f;
+
+    //максимальная частота
+    public static Integer MAX_HZ = 15000;
+
+    //процент громкости, чтобы отобразить бар звука
+    public static Float MIN_SOUND_AMPL_FILTER_PRC = 3.2f;
+
+    //множители аплтуд для частот в диапазонах
+    public static Float LOW_HZ_MLT = 0.02f;
     public static Float MID_HZ_MLT_LOW_BOUND = 1500f;
+    public static Float MID_HZ_MLT = 1.0f;
     public static Float MID_HZ_MLT_HIGH_BOUND = 6000f;
     public static Float HIGH_HZ_MLT = 1.0f;
-    public static Float HIGH_HZ_MLT_LOW_BOUND = 6000f;
+
+    //сколько последних хранить для сравнения
     public static Integer MAX_LAST_AMPL_LIST_SIZE = 500;
+
     public static Integer MIN_HSB_VAL = 220;
     public static Integer MAX_HSB_VAL = 360;
-    public static Float LED_BRIGHT = 0.61f;
+    public static Float LED_BRIGHT = 0.71f;
     public static Integer ASYM_MODE = 1;
     public static String SEND = "1";
+
+    public static Integer EFFECTS_THREAS_COUNT = 20;
 
 
 
@@ -73,15 +77,15 @@ public class Config {
             INT_CNT = Integer.parseInt(prop.getProperty("INT_CNT"));
             LED_CNT = Integer.parseInt(prop.getProperty("LED_CNT"));
             MAX_HZ = Integer.parseInt(prop.getProperty("MAX_HZ"));
-            MAX_HZ_LIMIT = Integer.parseInt(prop.getProperty("MAX_HZ_LIMIT"));
-            MIN_SOUAND_AMPL_FILTER_PRC = Float.parseFloat(prop.getProperty("MIN_SOUAND_AMPL_FILTER_PRC"));
+            //MAX_HZ_LIMIT = Integer.parseInt(prop.getProperty("MAX_HZ_LIMIT"));
+            MIN_SOUND_AMPL_FILTER_PRC = Float.parseFloat(prop.getProperty("MIN_SOUAND_AMPL_FILTER_PRC"));
             LOW_HZ_MLT = Float.parseFloat(prop.getProperty("LOW_HZ_MLT"));
-            LOW_HZ_MLT_HIGH_BOUND = Float.parseFloat(prop.getProperty("LOW_HZ_MLT_HIGH_BOUND"));
+            //LOW_HZ_MLT_HIGH_BOUND = Float.parseFloat(prop.getProperty("LOW_HZ_MLT_HIGH_BOUND"));
             MID_HZ_MLT = Float.parseFloat(prop.getProperty("MID_HZ_MLT"));
             MID_HZ_MLT_LOW_BOUND = Float.parseFloat(prop.getProperty("MID_HZ_MLT_LOW_BOUND"));
             MID_HZ_MLT_HIGH_BOUND = Float.parseFloat(prop.getProperty("MID_HZ_MLT_HIGH_BOUND"));
             HIGH_HZ_MLT = Float.parseFloat(prop.getProperty("HIGH_HZ_MLT"));
-            HIGH_HZ_MLT_LOW_BOUND = Float.parseFloat(prop.getProperty("HIGH_HZ_MLT_LOW_BOUND"));
+            //HIGH_HZ_MLT_LOW_BOUND = Float.parseFloat(prop.getProperty("HIGH_HZ_MLT_LOW_BOUND"));
             MAX_LAST_AMPL_LIST_SIZE =  Integer.parseInt(prop.getProperty("MAX_LAST_AMPL_LIST_SIZE"));
             MIN_HSB_VAL =  Integer.parseInt(prop.getProperty("MIN_HSB_VAL"));
             MAX_HSB_VAL =  Integer.parseInt(prop.getProperty("MAX_HSB_VAL"));
@@ -105,15 +109,15 @@ public class Config {
             prop.setProperty("INT_CNT", String.valueOf(INT_CNT));
             prop.setProperty("LED_CNT", String.valueOf(LED_CNT));
             prop.setProperty("MAX_HZ", String.valueOf(MAX_HZ));
-            prop.setProperty("MAX_HZ_LIMIT", String.valueOf(MAX_HZ_LIMIT));
-            prop.setProperty("MIN_SOUAND_AMPL_FILTER_PRC", String.valueOf(MIN_SOUAND_AMPL_FILTER_PRC));
+            //prop.setProperty("MAX_HZ_LIMIT", String.valueOf(MAX_HZ_LIMIT));
+            prop.setProperty("MIN_SOUAND_AMPL_FILTER_PRC", String.valueOf(MIN_SOUND_AMPL_FILTER_PRC));
             prop.setProperty("LOW_HZ_MLT", String.valueOf(LOW_HZ_MLT));
-            prop.setProperty("LOW_HZ_MLT_HIGH_BOUND", String.valueOf(LOW_HZ_MLT_HIGH_BOUND));
+            //prop.setProperty("LOW_HZ_MLT_HIGH_BOUND", String.valueOf(LOW_HZ_MLT_HIGH_BOUND));
             prop.setProperty("MID_HZ_MLT", String.valueOf(MID_HZ_MLT));
             prop.setProperty("MID_HZ_MLT_LOW_BOUND", String.valueOf(MID_HZ_MLT_LOW_BOUND));
             prop.setProperty("MID_HZ_MLT_HIGH_BOUND", String.valueOf(MID_HZ_MLT_HIGH_BOUND));
             prop.setProperty("HIGH_HZ_MLT", String.valueOf(HIGH_HZ_MLT));
-            prop.setProperty("HIGH_HZ_MLT_LOW_BOUND", String.valueOf(HIGH_HZ_MLT_LOW_BOUND));
+            //prop.setProperty("HIGH_HZ_MLT_LOW_BOUND", String.valueOf(HIGH_HZ_MLT_LOW_BOUND));
             prop.setProperty("MAX_LAST_AMPL_LIST_SIZE", String.valueOf(MAX_LAST_AMPL_LIST_SIZE));
             prop.setProperty("MIN_HSB_VAL", String.valueOf(MIN_HSB_VAL));
             prop.setProperty("MAX_HSB_VAL", String.valueOf(MAX_HSB_VAL));

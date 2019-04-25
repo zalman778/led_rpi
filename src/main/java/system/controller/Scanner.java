@@ -8,23 +8,36 @@ import be.tarsos.dsp.io.jvm.JVMAudioInputStream;
 import be.tarsos.dsp.util.fft.FFT;
 import org.apache.log4j.Logger;
 import system.config.Config;
+import system.effects.Effect;
+import system.effects.EffectEqualizer;
+import system.effects.EffectsHandler;
 import system.model.Led;
 import system.model.LedStrip;
 
 import javax.sound.sampled.*;
 import java.awt.*;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 
 
 /**
  * Created by Hiwoo on 06.02.2018.
  */
 public class Scanner {
-    final static Logger logger = Logger.getLogger(Scanner.class);
-    final int bufferSize = 4096;
-    final int fftSize = bufferSize / 2;
-    final int sampleRate = 48000;//44100;
+    private static Logger logger = Logger.getLogger(Scanner.class);
+    private int bufferSize = 4096;
+    private int fftSize = bufferSize / 2;
+    private int sampleRate = 48000;
+
+    //массив: частота - амплитуда
+
+    //private Double[][] hzAmplArr = new Double[fftSize][2];
+    private ArrayList<ArrayList<Double>> hzAmplArr = new ArrayList<>();
+    private Double maxHz = 0d;
+    private Double minHz = 0d;
 
 
     private AudioDispatcher audioDispatcher;
@@ -35,6 +48,8 @@ public class Scanner {
     private TargetDataLine line;
     private AudioInputStream stream;
     private TarsosDSPAudioInputStream audioStream;
+
+    private EffectsHandler effectsHandler;
 
 
 
@@ -100,26 +115,31 @@ public class Scanner {
             audioStream = new JVMAudioInputStream(stream);
             audioDispatcher = new AudioDispatcher(audioStream, bufferSize, 0);
 
+
+
+
+            final Effect effect;
+            //choosing the effect, depending on config:
+            if (Config.ASYM_MODE == 1) {
+                HashMap<String, Object> paramsMap = new HashMap<>();
+                paramsMap.put("hzAmplArr", hzAmplArr);
+                paramsMap.put("maxHz", maxHz);
+                paramsMap.put("minHz", minHz);
+//                System.out.println("writted init params: arr="+hzAmplArr.hashCode()
+//                +"; max="+maxHz.hashCode()
+//                );
+                effect = new EffectEqualizer(ledStrip, paramsMap);
+            } else
+                effect = null;
+
+
+
             audioProcessor = new AudioProcessor() {
 
                 FFT fft = new FFT(bufferSize);
-                final float[] amplitudes = new float[fftSize];
 
-                double[][] hzAmplArr;
-                double minHz;
-                double maxHz;
-                double intMaxAmplsArr[];
+                float[] amplitudes = new float[fftSize];
 
-                float[] hsbArr;
-                float[] silenceArr;
-                float currVal;
-
-                float diffMinMax;
-                float additionalDiff;
-
-                int red = 1;
-                int green = 1;
-                int blue = 1;
 
                 public boolean process(AudioEvent audioEvent) {
                     //System.out.println("new loop of process:");
@@ -130,136 +150,52 @@ public class Scanner {
 
 
                     //creating array of Hz - Ampl value
-                    hzAmplArr = new double[amplitudes.length][2];
-                    minHz = Config.MAX_HZ;
-                    maxHz = 0;
+                    //hzAmplArr = new Double[amplitudes.length][2];
+                    //hzAmplArr = new ArrayList<>(Collections.nCopies(amplitudes.length, new ArrayList<>()));
+                    hzAmplArr = new ArrayList<>();
+                    for (int i = 0; i < amplitudes.length; i++) {
+                        hzAmplArr.add(new ArrayList<>());
+                    }
+
+                    minHz = (double) Config.MAX_HZ;
+                    maxHz = 0d;
 
                     for (int i = 0; i < amplitudes.length; i++) {
 
                         //System.out.printf("Amplitude at %3d Hz: %8.3f     ", (int) fft.binToHz(i, sampleRate) , amplitudes[i]);
-                        hzAmplArr[i][0] = fft.binToHz(i, sampleRate);
+                        //получаем частоту
+                        //hzAmplArr[i][0] = fft.binToHz(i, sampleRate);
+                        hzAmplArr.get(i).add(fft.binToHz(i, sampleRate));
 
                         //специальное занижение ампитуды частоты (сабик громкий)
-                        if (hzAmplArr[i][0] < Config.LOW_HZ_MLT_HIGH_BOUND)
-                            hzAmplArr[i][1] = amplitudes[i] * Config.LOW_HZ_MLT;
-                        else if (hzAmplArr[i][1] >= Config.MID_HZ_MLT_LOW_BOUND && hzAmplArr[i][1] < Config.MID_HZ_MLT_HIGH_BOUND)
-                            hzAmplArr[i][1] = amplitudes[i] * Config.MID_HZ_MLT;
+                        if (hzAmplArr.get(i).get(0) < Config.MID_HZ_MLT_LOW_BOUND)
+                            //hzAmplArr[i][1] = (double) (amplitudes[i] * Config.LOW_HZ_MLT);
+                            hzAmplArr.get(i).add((double) (amplitudes[i] * Config.LOW_HZ_MLT));
                         else
-                            hzAmplArr[i][1] = amplitudes[i] * Config.HIGH_HZ_MLT;
+                            if (       hzAmplArr.get(i).get(0) >= Config.MID_HZ_MLT_LOW_BOUND
+                                    && hzAmplArr.get(i).get(0) < Config.MID_HZ_MLT_HIGH_BOUND
+                            )
+                                //hzAmplArr[i][1] = (double) amplitudes[i] * Config.MID_HZ_MLT;
+                                hzAmplArr.get(i).add((double) amplitudes[i] * Config.MID_HZ_MLT);
+                            else
+                                //hzAmplArr[i][1] = (double) amplitudes[i] * Config.HIGH_HZ_MLT;
+                                hzAmplArr.get(i).add((double) amplitudes[i] * Config.HIGH_HZ_MLT);
 
 
                         //min and max
-                        if (minHz > hzAmplArr[i][0])
-                            minHz = hzAmplArr[i][0];
-                        if (maxHz < hzAmplArr[i][0])
-                            maxHz = hzAmplArr[i][0];
+                        if (minHz > hzAmplArr.get(i).get(0))
+                            minHz = hzAmplArr.get(i).get(0);
+                        if (maxHz < hzAmplArr.get(i).get(0))
+                            maxHz = hzAmplArr.get(i).get(0);
                     }
                     //System.out.println(minHz+" "+maxHz);
                     //limiting maxHz
-                    if (maxHz > Config.MAX_HZ_LIMIT)
-                        maxHz = Config.MAX_HZ_LIMIT;
-                    //cutting min-max to INT_CNT intervals
-                    int deltaInt = (int) Math.round((maxHz - minHz) / Config.INT_CNT);
-                    //array of max Ampl for each Interval
-                    intMaxAmplsArr = new double[Config.INT_CNT];
-                    Arrays.fill(intMaxAmplsArr, 0);
+                    if (maxHz > Config.MAX_HZ)
+                        maxHz = (double) Config.MAX_HZ;
 
-                    for (int i = 0; i < Config.INT_CNT - 1; i++) {
-                        double maxCurrAmpl = 0;
-                        for (int j = 0; j < hzAmplArr.length; j++) {
-                            if (hzAmplArr[j][0] > i * deltaInt && hzAmplArr[j][0] < (i + 1) * deltaInt) {
-                                if (hzAmplArr[j][1] > maxCurrAmpl) {
-                                    maxCurrAmpl = hzAmplArr[j][1];
-                                }
-                            }
-                        }
-                        intMaxAmplsArr[i] = maxCurrAmpl;
+                    //System.out.println("before tick: maxHz="+maxHz);
+                    effect.tick(hzAmplArr, maxHz, minHz);
 
-                        //update all-time peaks;
-                        if (Config.maxAmplArrAllTime[i] < intMaxAmplsArr[i])
-                            Config.maxAmplArrAllTime[i] = intMaxAmplsArr[i];
-                    }
-
-                    hsbArr = new float[Config.INT_CNT - 1];
-                    silenceArr = new float[Config.INT_CNT - 1]; //массив тишины- - выключаем свет, если нет
-
-
-                    for (int i = 0; i < Config.INT_CNT - 1; i++) {
-                        //calculation HSB-color limits from Cfg
-                        float min_hsb_val_in_1 = Config.MIN_HSB_VAL / 360.0f;
-                        float max_hsb_val_in_1 = Config.MAX_HSB_VAL / 360.0f;
-
-
-                        currVal = (float) ((intMaxAmplsArr[i]) / Config.maxAmplArrAllTime[i]);
-
-                        //Список последних аплитуд и сравнение со средним
-                        //если  не полный, то замолняем
-                        if (Config.currAmplListSize < Config.MAX_LAST_AMPL_LIST_SIZE) {
-                            Config.lastXAmplList.addFirst(intMaxAmplsArr[i]);
-                            Config.currAmplListSize++;
-                        } else {
-                            //если полный, то удаляем конец, добавляем голову
-                            Config.lastXAmplList.removeLast();
-                            Config.lastXAmplList.addFirst(intMaxAmplsArr[i]);
-
-                            //проверка всего списка на макс, если меньше, то обновляем макс
-                            boolean wasNoMaxInList = true;
-                            //System.out.println("compare:");
-                            for (Double x : Config.getLastXAmplList()) {
-                                //System.out.print(x+" ");
-                                if (x > Config.MIN_SOUAND_AMPL_FILTER_PRC * Config.currentMaxAmplVal / 100) {
-                                    wasNoMaxInList = false;
-                                    break;
-                                }
-                            }
-                            //System.out.println();
-                            //System.out.println("was comparing with "+(MIN_SOUAND_AMPL_FILTER_PRC * currentMaxAmplVal));
-                            if (wasNoMaxInList) {
-                                Config.reset();
-                                //System.out.println("reset");
-                            }
-                        }
-
-
-                        //Обновление макс аплитуды
-                        if (intMaxAmplsArr[i] > Config.currentMaxAmplVal) {
-                            Config.currentMaxAmplVal = intMaxAmplsArr[i];
-                        }
-
-                        if (intMaxAmplsArr[i] > (Config.currentMaxAmplVal * Config.MIN_SOUAND_AMPL_FILTER_PRC / 100))
-                            silenceArr[i] = 1;
-                        else
-                            silenceArr[i] = 0;
-
-
-                        diffMinMax = max_hsb_val_in_1 - min_hsb_val_in_1;
-                        additionalDiff = diffMinMax * currVal;
-                        currVal = min_hsb_val_in_1 + additionalDiff;
-                        hsbArr[i] = currVal;
-                    }
-
-                    //writing all HSB int to Led arrays
-                    int ledIntDelta = Config.LED_CNT / Config.INT_CNT;
-
-                    for (int i = 0; i < Config.INT_CNT - 1; i++) {
-                        //default light, if current sound peak didnt reach its max val
-                        red = 1;
-                        green = 1;
-                        blue = 1;
-
-                        if (silenceArr[i] == 1) {
-                            int rgb = Color.HSBtoRGB(hsbArr[i], 1.0f, 1.0f);
-                            red = (rgb >> 16) & 0xFF;
-                            green = (rgb >> 8) & 0xFF;
-                            blue = rgb & 0xFF;
-                        }
-
-                        for (int j = i * ledIntDelta; j < (i + 1) * ledIntDelta; j++) {
-                            ledStrip.set(j, new Led(red, green, blue, Config.LED_BRIGHT));
-                        }
-
-
-                    }
                     //logger.info("fft done: curr peak = " + Config.currentMaxAmplVal);
                     return true;
                 }

@@ -11,15 +11,14 @@ import org.springframework.context.annotation.*;
 import system.config.Config;
 import system.controller.SoundListenner;
 import system.controller.SoundRunnable;
+import system.effects.EffectsHandler;
 import system.model.LedStrip;
 import system.view.SignalRunnable;
 import system.view.SignalSender;
 
-import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.sound.sampled.LineUnavailableException;
-import java.util.Arrays;
 
 /**
  * Created by sanek on 05.02.2018.
@@ -47,6 +46,15 @@ public class Application extends SpringBootServletInitializer implements Servlet
     @Autowired
     SoundRunnable soundRunnable;
 
+    @Autowired
+    EffectsHandler effectsHandler;
+
+    @Bean
+    public EffectsHandler getEffectsHandler() {
+        EffectsHandler effectsHandler = new EffectsHandler();
+        return effectsHandler;
+    }
+
 
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
@@ -61,6 +69,7 @@ public class Application extends SpringBootServletInitializer implements Servlet
     public SoundListenner soundListenner() {
         SoundListenner soundListenner = new SoundListenner();
         soundListenner.setLedStrip(ledStrip);
+        soundListenner.setEffectsHandler(effectsHandler);
         soundListenner.init();
         return soundListenner;
     }
@@ -76,6 +85,7 @@ public class Application extends SpringBootServletInitializer implements Servlet
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
+
         Config.readAll(context);
     }
 

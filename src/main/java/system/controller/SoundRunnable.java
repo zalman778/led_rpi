@@ -1,5 +1,6 @@
 package system.controller;
 
+import system.effects.EffectsHandler;
 import system.model.LedStrip;
 
 /**
@@ -9,7 +10,7 @@ public interface SoundRunnable extends Runnable  {
     public void init();
 
     public void setLedStrip(LedStrip ledStrip);
-
+    public void setEffectsHandler(EffectsHandler effectsHandler);
     public void stop();
 
 }

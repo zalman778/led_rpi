@@ -1,3 +1,7 @@
 # Created by .ignore support plugin (hsz.mobi)
 Будет удалено .idea/workspace.xml
 Будет удалено target/
+/target/
+Будет удалено releases/
+/releases/
+/.idea/
